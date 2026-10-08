@@ -10,3 +10,10 @@
 *.properties
 !.mvn/wrapper/maven-wrapper.properties
 .env
+.git
+.github
+target/
+.mvn/wrapper/maven-wrapper.jar
+*.iml
+.idea/
+.settings/
