@@ -14,13 +14,11 @@
 #    limitations under the License.
 #
 
-version: "3.9"
-
 services:
   jpetstore:
     container_name: jpetstore
     build:
       context: .
     ports:
-      - 8080:8080
+      - "8080:8080"
     restart: always
