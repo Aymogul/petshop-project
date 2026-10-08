@@ -22,7 +22,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
-     matrix:
+      matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         java: [17, 21]
         distribution: ['zulu']
@@ -47,4 +47,4 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-
 
       - name: Test with Maven
-        run: mvn test -B -V --no-transfer-progress -D"license.skip=true"
+        run: mvn test -B -V --no-transfer-progress '-Dlicense.skip=true'
