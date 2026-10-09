@@ -85,3 +85,15 @@ variable "log_group_name" {
   type        = string
   default     = "/ecs/petshop"
 }
+
+variable "container_environment" {
+  description = "Environment variables to inject into the ECS container."
+  type        = map(string)
+  default     = {}
+}
+
+variable "container_secrets" {
+  description = "Secrets to inject into the ECS container from AWS Secrets Manager."
+  type        = map(string)
+  default     = {}
+}

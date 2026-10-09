@@ -66,6 +66,18 @@ resource "aws_ecs_task_definition" "this" {
           protocol      = "tcp"
         }
       ]
+      environment = [
+        for key, value in var.container_environment : {
+          name  = key
+          value = tostring(value)
+        }
+      ]
+      secrets = [
+        for key, value in var.container_secrets : {
+          name      = key
+          valueFrom = value
+        }
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {

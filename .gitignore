@@ -10,6 +10,7 @@
 *.properties
 !.mvn/wrapper/maven-wrapper.properties
 .env
+.env.*
 .git
 .github
 target/
@@ -17,3 +18,27 @@ target/
 *.iml
 .idea/
 .settings/
+
+# Terraform / IaC
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Secrets / credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# Local tooling / OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo

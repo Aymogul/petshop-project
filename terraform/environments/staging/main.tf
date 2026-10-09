@@ -65,6 +65,18 @@ module "database" {
   multi_az                  = false
 }
 
+module "secrets" {
+  source = "../../modules/secrets"
+
+  project_name = var.project_name
+  environment  = var.environment
+  db_host      = module.database.database_endpoint
+  db_port      = module.database.database_port
+  db_name      = module.database.database_name
+  db_username  = module.database.database_username
+  db_password  = module.database.database_password
+}
+
 module "alb" {
   source = "../../modules/alb"
 
@@ -90,4 +102,16 @@ module "ecs" {
   desired_count         = 1
   task_cpu              = 256
   task_memory           = 512
+  container_environment = {
+    APP_ENV         = "staging"
+    DB_HOST         = module.database.database_endpoint
+    DB_PORT         = tostring(module.database.database_port)
+    DB_NAME         = module.database.database_name
+    DB_USERNAME     = module.database.database_username
+    SPRING_PROFILES = "staging"
+    SERVER_PORT     = "8080"
+  }
+  container_secrets = {
+    DB_PASSWORD = "${module.secrets.database_secret_arn}:DB_PASSWORD::"
+  }
 }

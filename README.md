@@ -82,3 +82,62 @@ Perform integration tests for screen transition.
 ```
 $ ./mvnw clean verify -P tomcat90
 ```
+
+## Infrastructure conventions
+
+This repository includes reusable Terraform modules for the deployment stack used by the application.
+
+### Standards
+
+- Keep the VPC, ALB, ECS, IAM, ECR, and database logic separated into reusable modules.
+- Use environment roots only for composition and default values.
+- Keep networking, runtime, and security concerns layered in the same order:
+  1. VPC
+  2. monitoring
+  3. IAM
+  4. ECR
+  5. database
+  6. ALB
+  7. ECS
+- Use GitHub OIDC as the default AWS authentication pattern for GitHub Actions instead of long-lived AWS access keys.
+- Never commit Terraform state files, generated provider directories, or secrets.
+- Prefer minimal resource sizing for early-stage deployments and scale intentionally.
+
+### GitHub OIDC for AWS deployment
+
+GitHub Actions should assume AWS credentials through OIDC, not static access keys. Configure the IAM module with the repository name and branch you want to trust, then use the generated role ARN in your workflow:
+
+```hcl
+module "iam" {
+  source = "./terraform/modules/iam"
+
+  project_name          = "petshop"
+  environment           = "prod"
+  enable_github_oidc   = true
+  github_repository     = "your-org/petshop-project"
+  github_branch         = "main"
+  oidc_role_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser",
+    "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
+  ]
+}
+```
+
+Then in GitHub Actions:
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+```
+
+and use `aws-actions/configure-aws-credentials` with `role-to-assume` pointing to the generated GitHub OIDC role.
+
+### Validate Terraform
+
+```bash
+cd terraform
+terraform fmt -recursive
+cd environments/prod && terraform init -backend=false && terraform validate
+cd ../staging && terraform init -backend=false && terraform validate
+```
