@@ -77,13 +77,28 @@ module "secrets" {
   db_password  = module.database.database_password
 }
 
-module "alb" {
-  source = "../../modules/alb"
+module "dns" {
+  count = var.enable_https && var.dns_zone_name != "" && var.app_domain_name != "" ? 1 : 0
+
+  source = "../../modules/dns"
 
   project_name = var.project_name
   environment  = var.environment
-  vpc_id       = module.vpc.vpc_id
-  subnet_ids   = module.vpc.public_subnet_ids
+  zone_name    = var.dns_zone_name
+  domain_name  = var.app_domain_name
+  alb_dns_name = module.alb.alb_dns_name
+  alb_zone_id  = module.alb.alb_zone_id
+}
+
+module "alb" {
+  source = "../../modules/alb"
+
+  project_name    = var.project_name
+  environment     = var.environment
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.public_subnet_ids
+  enable_https    = var.enable_https && var.dns_zone_name != "" && var.app_domain_name != ""
+  certificate_arn = var.enable_https && var.dns_zone_name != "" && var.app_domain_name != "" ? try(module.dns[0].certificate_arn, null) : null
 }
 
 module "ecs" {
