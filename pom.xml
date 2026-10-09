@@ -136,6 +136,12 @@
       <version>${hsqldb.version}</version>
       <classifier>jdk8</classifier>
     </dependency>
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <version>8.4.0</version>
+      <scope>runtime</scope>
+    </dependency>
 
     <!-- Test dependencies -->
     <dependency>

@@ -122,13 +122,15 @@ module "ecs" {
   task_cpu              = 256
   task_memory           = 512
   container_environment = {
-    APP_ENV         = "staging"
-    DB_HOST         = module.database.database_endpoint
-    DB_PORT         = tostring(module.database.database_port)
-    DB_NAME         = module.database.database_name
-    DB_USERNAME     = module.database.database_username
-    SPRING_PROFILES = "staging"
-    SERVER_PORT     = "8080"
+    APP_ENV              = "staging"
+    DB_HOST              = module.database.database_endpoint
+    DB_PORT              = tostring(module.database.database_port)
+    DB_NAME              = module.database.database_name
+    DB_USERNAME          = module.database.database_username
+    DB_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver"
+    DB_URL               = "jdbc:mysql://${module.database.database_endpoint}:${module.database.database_port}/${module.database.database_name}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    SPRING_PROFILES      = "staging"
+    SERVER_PORT          = "8080"
   }
   container_secrets = {
     DB_PASSWORD = "${module.secrets.database_secret_arn}:DB_PASSWORD::"

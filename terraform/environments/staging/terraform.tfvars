@@ -1,11 +1,11 @@
-# Staging defaults for the deployment platform.
-# Replace these values with the actual GitHub repo and public DNS when you are ready to activate OIDC and HTTPS.
+# Staging deployment defaults.
+# This uses the default ALB AWS hostname and GitHub OIDC on the main branch.
 project_name       = "petshop"
 environment        = "staging"
-enable_github_oidc = false
-github_repository  = "your-org/petshop-project"
+enable_github_oidc = true
+github_repository  = "Aymogul/petshop-project"
 github_branch      = "main"
-github_environment = "staging"
+github_environment = ""
 enable_https       = false
 dns_zone_name      = ""
 app_domain_name    = ""
