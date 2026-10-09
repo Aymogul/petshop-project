@@ -7,6 +7,7 @@ locals {
   }
 }
 
+# The VPC is the network boundary for every app, ALB, and database resource in this environment.
 resource "aws_vpc" "this" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -87,6 +88,7 @@ resource "aws_eip" "nat" {
   })
 }
 
+# Private ECS tasks need an egress path, so we place NAT in a public subnet and route private traffic through it.
 resource "aws_nat_gateway" "this" {
   count = length(var.private_subnet_cidrs) > 0 ? 1 : 0
 
