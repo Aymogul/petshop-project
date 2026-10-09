@@ -45,6 +45,26 @@ module "iam" {
   environment  = var.environment
 }
 
+module "ecr" {
+  source = "../../modules/ecr"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+module "database" {
+  source = "../../modules/database"
+
+  project_name              = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.vpc.vpc_id
+  db_subnet_group_name      = module.vpc.database_subnet_group_name
+  allowed_security_group_id = module.ecs.service_security_group_id
+  instance_class            = "db.t3.micro"
+  allocated_storage         = 20
+  multi_az                  = false
+}
+
 module "alb" {
   source = "../../modules/alb"
 
@@ -66,4 +86,8 @@ module "ecs" {
   target_group_arn      = module.alb.target_group_arn
   alb_security_group_id = module.alb.security_group_id
   log_group_name        = module.monitoring.ecs_log_group_name
+  container_image       = "${module.ecr.repository_url}:latest"
+  desired_count         = 1
+  task_cpu              = 256
+  task_memory           = 512
 }

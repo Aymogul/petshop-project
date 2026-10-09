@@ -69,9 +69,9 @@ variable "task_memory" {
 }
 
 variable "desired_count" {
-  description = "Desired number of tasks."
+  description = "Desired number of tasks. Start with a single task to keep costs minimal."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "aws_region" {
