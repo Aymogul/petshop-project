@@ -10,6 +10,30 @@ variable "environment" {
   default     = "staging"
 }
 
+variable "enable_github_oidc" {
+  description = "Whether to create the GitHub OIDC provider and deployment role for GitHub Actions."
+  type        = bool
+  default     = false
+}
+
+variable "github_repository" {
+  description = "GitHub repository in the format org/repo that is allowed to assume the deployment role."
+  type        = string
+  default     = ""
+}
+
+variable "github_branch" {
+  description = "Branch allowed to use the OIDC role."
+  type        = string
+  default     = "main"
+}
+
+variable "github_environment" {
+  description = "Optional GitHub environment name to scope the OIDC role."
+  type        = string
+  default     = ""
+}
+
 variable "enable_https" {
   description = "Whether to provision a public HTTPS endpoint and certificate for the application."
   type        = bool
