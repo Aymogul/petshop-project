@@ -11,11 +11,11 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: petshop-prod
-  ECS_CLUSTER: petshop-prod-cluster
-  ECS_SERVICE: petshop-prod-service
-  ECS_TASK_DEFINITION: petshop-prod-task
+  AWS_REGION: ${{ vars.AWS_REGION != '' && vars.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY != '' && vars.ECR_REPOSITORY || 'petshop-prod' }}
+  ECS_CLUSTER: ${{ vars.ECS_CLUSTER != '' && vars.ECS_CLUSTER || 'petshop-prod-cluster' }}
+  ECS_SERVICE: ${{ vars.ECS_SERVICE != '' && vars.ECS_SERVICE || 'petshop-prod-service' }}
+  ECS_TASK_DEFINITION: ${{ vars.ECS_TASK_DEFINITION != '' && vars.ECS_TASK_DEFINITION || 'petshop-prod-task' }}
 
 jobs:
   build-and-deploy:
@@ -39,7 +39,7 @@ jobs:
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN != '' && secrets.AWS_DEPLOY_ROLE_ARN || secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Log in to Amazon ECR
@@ -51,21 +51,49 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" .
-          docker tag "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" "$REGISTRY/$ECR_REPOSITORY:latest"
-          docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+          docker build -t "$REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" .
+          docker tag "$REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" "$REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
+          docker push "$REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
+          docker push "$REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
+          echo "IMAGE_URI=$REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> "$GITHUB_ENV"
 
       - name: Update ECS task definition and deploy
+        env:
+          IMAGE_URI: ${{ env.IMAGE_URI }}
         run: |
-          IMAGE_URI="$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          set -euo pipefail
 
           aws ecs describe-task-definition \
-            --task-definition "$ECS_TASK_DEFINITION" \
+            --task-definition "${{ env.ECS_TASK_DEFINITION }}" \
             --query 'taskDefinition' \
             --output json > task-definition.json
 
-          ruby -e "require 'json'; file = 'task-definition.json'; data = JSON.parse(File.read(file)); data.delete('taskDefinitionArn'); data.delete('revision'); data.delete('status'); data.delete('requiresAttributes'); data.delete('creationDate'); data.delete('compatibilities'); data.delete('registeredAt'); data.delete('registeredBy'); data['containerDefinitions'].each { |container| if container['name'] == 'app'; container['image'] = ENV['IMAGE_URI']; end }; File.write('new-task-definition.json', JSON.pretty_generate(data))" 
+          python - <<'PY'
+          import json
+          import os
+
+          with open('task-definition.json', 'r', encoding='utf-8') as fh:
+              data = json.load(fh)
+
+          for key in [
+              'taskDefinitionArn',
+              'revision',
+              'status',
+              'requiresAttributes',
+              'creationDate',
+              'compatibilities',
+              'registeredAt',
+              'registeredBy',
+          ]:
+              data.pop(key, None)
+
+          for container in data.get('containerDefinitions', []):
+              if container.get('name') == 'app':
+                  container['image'] = os.environ['IMAGE_URI']
+
+          with open('new-task-definition.json', 'w', encoding='utf-8') as fh:
+              json.dump(data, fh, indent=2)
+          PY
 
           NEW_REVISION=$(aws ecs register-task-definition \
             --cli-input-json file://new-task-definition.json \
@@ -73,8 +101,8 @@ jobs:
             --output text)
 
           aws ecs update-service \
-            --cluster "$ECS_CLUSTER" \
-            --service "$ECS_SERVICE" \
-            --task-definition "$ECS_TASK_DEFINITION:$NEW_REVISION" \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --service "${{ env.ECS_SERVICE }}" \
+            --task-definition "${{ env.ECS_TASK_DEFINITION }}:$NEW_REVISION" \
             --force-new-deployment \
-            --region "$AWS_REGION"
+            --region "${{ env.AWS_REGION }}"
