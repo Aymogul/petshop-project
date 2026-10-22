@@ -41,12 +41,13 @@ module "monitoring" {
 module "iam" {
   source = "../../modules/iam"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  enable_github_oidc = var.enable_github_oidc
-  github_repository  = var.github_repository
-  github_branch      = var.github_branch
-  github_environment = var.github_environment
+  project_name         = var.project_name
+  environment          = var.environment
+  enable_github_oidc   = var.enable_github_oidc
+  github_repository    = var.github_repository
+  github_branch        = var.github_branch
+  github_environment   = var.github_environment
+  create_oidc_provider = var.create_oidc_provider
 }
 
 module "ecr" {
