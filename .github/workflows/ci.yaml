@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-24.04, macOS-15, windows-2025]
         java: [17, 21]
         distribution: ['zulu']
       fail-fast: false
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
