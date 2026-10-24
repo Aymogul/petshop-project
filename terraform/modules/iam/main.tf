@@ -111,11 +111,10 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = var.github_environment != "" ? [
-        "repo:${var.github_repository}:environment:${var.github_environment}",
-        ] : [
-        "repo:${var.github_repository}:ref:refs/heads/${var.github_branch}",
-      ]
+      values = concat(
+        var.github_environment != "" ? ["repo:${var.github_repository}:environment:${var.github_environment}"] : [],
+        ["repo:${var.github_repository}:ref:refs/heads/${var.github_branch}"]
+      )
     }
   }
 }
