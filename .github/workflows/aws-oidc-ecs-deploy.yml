@@ -56,7 +56,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64
           push: true
+          provenance: false
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest

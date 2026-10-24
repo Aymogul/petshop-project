@@ -26,27 +26,25 @@ FROM eclipse-temurin:17-jdk AS builder
 
 WORKDIR /usr/src/myapp
 
-# Copy wrapper and descriptor first to cache dependencies
+# Copy wrapper and descriptor first so Maven can reuse the local cache
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x ./mvnw
 
-# Pre-fetch Maven dependencies using BuildKit cache for faster rebuilds
-RUN --mount=type=cache,target=/root/.m2 \
-    ./mvnw dependency:go-offline -B --no-transfer-progress
-
 # Copy application sources
 COPY src/ ./src/
 
-# Package the WAR file, skipping tests, rewrite, and formatters
+# Package the WAR file, skipping tests and formatters. This is the only build step
+# needed in a fresh builder stage, and it avoids the slow extra dependency:
+# go-offline pass that was dominating build time.
 RUN --mount=type=cache,target=/root/.m2 \
-    ./mvnw clean package \
+    ./mvnw -B package \
     -DskipTests \
     -Dlicense.skip=true \
     -Drewrite.skip=true \
     -Dformatter.skip=true \
     -Dimpsort.skip=true \
-    -B --no-transfer-progress
+    --no-transfer-progress
 
 # --- Runtime Stage (Official Tomcat 9 with JDK 17) ---
 FROM tomcat:9.0-jdk17-temurin
