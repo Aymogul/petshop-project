@@ -34,6 +34,12 @@ variable "github_environment" {
   default     = ""
 }
 
+variable "create_oidc_provider" {
+  description = "Whether to create the GitHub OIDC provider for this AWS account. Disable when it already exists."
+  type        = bool
+  default     = true
+}
+
 variable "enable_https" {
   description = "Whether to provision a public HTTPS endpoint and certificate for the application."
   type        = bool

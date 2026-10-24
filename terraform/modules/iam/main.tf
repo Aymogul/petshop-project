@@ -1,3 +1,6 @@
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 data "aws_iam_policy_document" "ecs_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -26,6 +29,27 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+data "aws_iam_policy_document" "ecs_task_execution_secrets" {
+  statement {
+    sid    = "AllowReadDatabaseSecret"
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+    ]
+
+    resources = [
+      "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:${var.project_name}-${var.environment}-db-credentials*"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
+  name   = "${var.project_name}-${var.environment}-ecs-task-execution-secrets"
+  role   = aws_iam_role.ecs_task_execution.name
+  policy = data.aws_iam_policy_document.ecs_task_execution_secrets.json
+}
+
 resource "aws_iam_role" "ecs_task" {
   name               = "${var.project_name}-${var.environment}-ecs-task"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
@@ -52,7 +76,7 @@ data "tls_certificate" "github_actions" {
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
-  count = var.enable_github_oidc && var.github_repository != "" ? 1 : 0
+  count = var.enable_github_oidc && var.github_repository != "" && var.create_oidc_provider ? 1 : 0
 
   url = "https://token.actions.githubusercontent.com"
 
@@ -72,8 +96,10 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github[0].arn]
+      type = "Federated"
+      identifiers = [
+        var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+      ]
     }
 
     condition {

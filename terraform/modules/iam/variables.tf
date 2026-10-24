@@ -33,6 +33,12 @@ variable "github_environment" {
   default     = ""
 }
 
+variable "create_oidc_provider" {
+  description = "Whether to create the GitHub OIDC provider in this AWS account. Set to false when it already exists."
+  type        = bool
+  default     = true
+}
+
 # Keep policy attachment flexible so the app can add least-privilege permissions without changing the core module contract.
 variable "additional_policy_arns" {
   description = "Additional IAM policy ARNs to attach to the ECS task role."
