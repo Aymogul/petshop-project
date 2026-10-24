@@ -1,7 +1,11 @@
 name: Deploy to AWS ECS via OIDC
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - "Terraform Infrastructure"
+    types:
+      - completed
     branches:
       - main
   workflow_dispatch:
@@ -19,6 +23,7 @@ env:
 
 jobs:
   build-and-deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
     environment: prod
 
