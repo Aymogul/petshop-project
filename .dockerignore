@@ -1,0 +1,26 @@
+# Git metadata
+.git
+.github
+.gitignore
+
+# Build output
+target/
+**/target/
+
+# Local/editor files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+
+# Terraform / deployment extras
+terraform/
+Ansible/
+Dockerfile
+
+docker-compose.yaml
+deployment.yaml
+
+# Logs and temp files
+*.log
+*.tmp
